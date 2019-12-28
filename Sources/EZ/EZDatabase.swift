@@ -2,7 +2,7 @@ import NIO
 import FluentKit
 import FluentSQLiteDriver
 
-public class FluentSQLiteDatabase {
+public class EZDatabase {
     let elg: EventLoopGroup
     public let database: Database
     let sqliteDriver: DatabaseDriver
@@ -28,5 +28,23 @@ public class FluentSQLiteDatabase {
     deinit {
         sqliteDriver.shutdown()
         try! elg.syncShutdownGracefully()
+    }
+}
+
+extension EZDatabase: Database {
+    public var context: DatabaseContext {
+        self.database.context
+    }
+    
+    public func execute(query: DatabaseQuery, onRow: @escaping (DatabaseRow) -> ()) -> EventLoopFuture<Void> {
+        self.database.execute(query: query, onRow: onRow)
+    }
+    
+    public func execute(schema: DatabaseSchema) -> EventLoopFuture<Void> {
+        self.database.execute(schema: schema)
+    }
+    
+    public func withConnection<T>(_ closure: @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
+        self.database.withConnection(closure)
     }
 }
