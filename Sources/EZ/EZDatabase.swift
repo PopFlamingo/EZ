@@ -9,7 +9,7 @@ public class EZDatabase {
     let sqliteDriver: DatabaseDriver
     let dbs: Databases
     
-    init(file: String? = nil) {
+    public init(file: String? = nil) {
         self.elg = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.threadPool = NIOThreadPool(numberOfThreads: 1)
         let el = self.elg.next()
