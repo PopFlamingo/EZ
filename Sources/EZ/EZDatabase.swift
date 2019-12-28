@@ -3,14 +3,17 @@ import FluentKit
 import FluentSQLiteDriver
 
 public class EZDatabase {
+    let threadPool: NIOThreadPool
     let elg: EventLoopGroup
     public let database: Database
     let sqliteDriver: DatabaseDriver
+    let dbs: Databases
     
     init(file: String? = nil) {
         self.elg = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        self.threadPool = NIOThreadPool(numberOfThreads: 1)
         let el = self.elg.next()
-        let dbs = Databases(threadPool: NIOThreadPool(numberOfThreads: 1), on: el)
+        self.dbs = Databases(threadPool: self.threadPool, on: el)
         let configuration = DatabaseConfiguration()
         let logger = Logger(label: "fluentdb")
         
