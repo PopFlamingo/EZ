@@ -21,8 +21,8 @@ Conform your iOS application delegate to `EZApp`, you must implement two propert
 
 ### The database property
 The `database` property is of `EZDatabase` type, you can initialize it as:
-- `EZDatabase()` if you want an ephermeral in memory database
-- `EZDatabase(file: "path/to/sqlite/db")`
+- `EZDatabase()` if you want an ephermeral in memory database.
+- `EZDatabase(file: "path/to/sqlite/db")` to use a persistent file.
 
 ### The migrations property
 This is an array containing all of your `Migration`s 
