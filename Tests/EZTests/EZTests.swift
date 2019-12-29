@@ -14,6 +14,7 @@ final class EZTests: XCTestCase {
     
     class Baz {
         @Query var values: [FooModel]
+        @Query(query: { $0.limit(10) }) var filtered: [FooModel]
     }
     
     var app: TestApp! = nil

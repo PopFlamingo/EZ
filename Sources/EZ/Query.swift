@@ -13,10 +13,11 @@ public class Query<ModelType: FluentKit.Model>: ObservableObject {
         self.init(database: nil)
     }
     
-    public init(database: EZDatabase?) {
+    public init(query queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
+        let actualModifier = queryModifier ?? { $0 }
         self.specifiedDatabase = database
         self.database.register(query: self) {
-            self.internalValue = try! ModelType.query(on: self.database).all().wait()
+            self.internalValue = try! actualModifier(ModelType.query(on: self.database)).all().wait()
         }
     }
     
