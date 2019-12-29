@@ -2,31 +2,31 @@ import FluentKit
 import SwiftUI
 
 @propertyWrapper
-public class Query<ModelType: FluentKit.Model> {
+public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     
-    @ObservedObject var observed = ObservedQuery(value: nil)
+    @ObservedObject var observed: ObservedQuery
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
     }
         
-    public convenience init() {
+    public init() {
         self.init(database: nil)
     }
     
     public init(query queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
         let actualModifier = queryModifier ?? { $0 }
         self.specifiedDatabase = database
+        let someObserved = ObservedQuery(value: nil)
+        self.observed = someObserved
         self.database.register(query: self) {
-            let newValue = try! actualModifier(ModelType.query(on: self.database)).all().wait()
-            print(newValue)
-            self.observed.value = newValue
+            let newValue = try! actualModifier(ModelType.query(on: database ?? EZDatabase.shared)).all().wait()
+            someObserved.value = newValue
         }
+        
     }
     
-    deinit {
-        database.deregister(query: self)
-    }
+    
     
     
     public var wrappedValue: [ModelType] {
