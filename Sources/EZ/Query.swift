@@ -6,7 +6,7 @@ public class Query<ModelType: FluentKit.Model>: ObservableObject {
     
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
-        specifiedDatabase ?? EZDatabase.shared!
+        specifiedDatabase ?? EZDatabase.shared
     }
     
     public convenience init() {

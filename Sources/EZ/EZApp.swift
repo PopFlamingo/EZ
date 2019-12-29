@@ -17,7 +17,7 @@ extension EZApp {
         try migrator.setupIfNeeded().wait()
         try migrator.prepareBatch().wait()
         // FIXME: This isn't a good approach
-        EZDatabase.shared = self.database
+        EZDatabase._shared = self.database
     }
 }
 

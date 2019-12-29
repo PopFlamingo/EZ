@@ -30,9 +30,11 @@ final class EZTests: XCTestCase {
         
         
         let baz = Baz()
-        baz.$values.objectWillChange.sink {
+        let foo = baz.$values.objectWillChange.sink {
             print("Wow") 
         }
+        print(foo)
+        
         XCTAssertNoThrow(try value.save(on: self.app.database).wait())
     }
 

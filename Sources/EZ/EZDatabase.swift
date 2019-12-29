@@ -35,7 +35,10 @@ public class EZDatabase {
         try! elg.syncShutdownGracefully()
     }
     
-    static var shared: EZDatabase? = nil
+    static var _shared: EZDatabase? = nil
+    public static var shared: EZDatabase {
+        return EZDatabase._shared!
+    }
     
     var changeListeners: [ListenerKey:()->()] = [:]
     
