@@ -1,4 +1,5 @@
 import NIO
+import Foundation
 import FluentKit
 import FluentSQLiteDriver
 
@@ -65,16 +66,19 @@ extension EZDatabase: Database {
     
     public func execute(query: DatabaseQuery, onRow: @escaping (DatabaseRow) -> ()) -> EventLoopFuture<Void> {
         
-        switch query.action {
-        case .create, .delete, .update, .custom(_):
-            for (key, action) in self.changeListeners where key.schema == query.schema {
-                action()
+        return self.database.execute(query: query, onRow: onRow).map {
+            switch query.action {
+            case .create, .delete, .update, .custom(_):
+                for (key, action) in self.changeListeners where key.schema == query.schema {
+                    // FIXME: Is this correct?
+                    DispatchQueue.main.async {
+                        action()
+                    }
+                }
+            default:
+                break
             }
-        default:
-            break
         }
-        
-        return self.database.execute(query: query, onRow: onRow)
     }
     
     public func execute(schema: DatabaseSchema) -> EventLoopFuture<Void> {

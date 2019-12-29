@@ -27,15 +27,9 @@ final class EZTests: XCTestCase {
     func testExample() {
         let value = FooModel()
         value.bar = "Hey"
-        
-        
         let baz = Baz()
-        let foo = baz.$values.objectWillChange.sink {
-            print("Wow") 
-        }
-        print(foo)
-        
         XCTAssertNoThrow(try value.save(on: self.app.database).wait())
+        XCTAssertEqual(baz.values.count, 1)
     }
 
     final class FooModel: Model {

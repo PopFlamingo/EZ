@@ -2,13 +2,14 @@ import FluentKit
 import SwiftUI
 
 @propertyWrapper
-public class Query<ModelType: FluentKit.Model>: ObservableObject {
+public class Query<ModelType: FluentKit.Model> {
     
+    @ObservedObject var observed = ObservedQuery(value: nil)
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
     }
-    
+        
     public convenience init() {
         self.init(database: nil)
     }
@@ -17,7 +18,9 @@ public class Query<ModelType: FluentKit.Model>: ObservableObject {
         let actualModifier = queryModifier ?? { $0 }
         self.specifiedDatabase = database
         self.database.register(query: self) {
-            self.internalValue = try! actualModifier(ModelType.query(on: self.database)).all().wait()
+            let newValue = try! actualModifier(ModelType.query(on: self.database)).all().wait()
+            print(newValue)
+            self.observed.value = newValue
         }
     }
     
@@ -25,24 +28,23 @@ public class Query<ModelType: FluentKit.Model>: ObservableObject {
         database.deregister(query: self)
     }
     
-    var internalValue: [ModelType]? = nil {
-        willSet {
-            self.objectWillChange.send()
-        }
-    }
     
     public var wrappedValue: [ModelType] {
-        if let existing = internalValue {
+        if let existing = observed.value {
             return existing
         } else {
             let value = try! ModelType.query(on: database).all().wait()
-            internalValue = value
+            observed.value = value
             return value
         }
     }
     
-    public var projectedValue: Query<ModelType> {
-        return self
+    class ObservedQuery: ObservableObject {
+        init(value: [ModelType]?) {
+            self.value = value
+        }
+        
+        @Published var value: [ModelType]?
     }
     
 }
