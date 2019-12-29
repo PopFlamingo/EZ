@@ -27,6 +27,6 @@ let package = Package(
             dependencies: ["FluentKit", "FluentSQLiteDriver"]),
         .testTarget(
             name: "EZTests",
-            dependencies: ["EZ"]),
+            dependencies: ["EZ", "FluentKit"]),
     ]
 )

@@ -13,7 +13,6 @@ extension EZApp {
         for migration in self.migrations {
             migrationsObject.add(migration)
         }
-        
         let migrator = Migrator(databases: database.dbs, migrations: migrationsObject, logger: database.logger, on: database.eventLoop)
         try migrator.setupIfNeeded().wait()
         try migrator.prepareBatch().wait()
