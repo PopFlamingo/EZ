@@ -5,6 +5,10 @@ This is a test library to use [FluentKit](https://github.com/vapor/fluent-kit) f
 ⚠️ This is mostly just a quick experimentation, the performance, API, and stability isn't necesseraly optimal, it will most likely not evolve much in the future
 
 ## Package setup
+### Apple platforms Xcode projects
+Add a package dependency to `https://github.com/adtrevor/ez.git`, and depend on the `master` branch, you can than simply `import EZ`
+
+### Swift Package Manager
 Add this dependency to your package:
 ```swift
 .package(url: "https://github.com/adtrevor/ez.git", .branch("master"))
