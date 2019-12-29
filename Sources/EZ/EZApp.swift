@@ -2,28 +2,24 @@
 import UIKit
 import FluentKit
 
-public protocol EZApp: UIApplicationDelegate {
+public protocol EZApp {
     var database: EZDatabase { get }
     var migrations: [Migration] { get }
 }
 
 extension EZApp {
     public func configureDatabase() throws {
-        let dbs = Databases(threadPool: database.threadPool, on: database.eventLoop)
         let migrationsObject = Migrations()
         for migration in self.migrations {
             migrationsObject.add(migration)
         }
         
-        let migrator = Migrator(databases: dbs, migrations: migrationsObject, logger: database.logger, on: database.eventLoop)
+        let migrator = Migrator(databases: database.dbs, migrations: migrationsObject, logger: database.logger, on: database.eventLoop)
         try migrator.setupIfNeeded().wait()
         try migrator.prepareBatch().wait()
+        // FIXME: This isn't a good approach
+        EZDatabase.shared = self.database
     }
-}
-
-enum DatabasePreference {
-    case ephemeral
-    case file(String)
 }
 
 #endif

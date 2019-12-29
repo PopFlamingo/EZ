@@ -24,6 +24,8 @@ public class EZDatabase {
             sqliteDriver = DatabaseDriverFactory.sqlite().makeDriver(dbs)
         }
         
+        dbs.use(sqliteDriver, as: .sqlite, isDefault: true)
+        
         let dbContext =  DatabaseContext(configuration: configuration, logger: logger, eventLoop: el)
         self.database = sqliteDriver.makeDatabase(with: dbContext)
     }
@@ -31,6 +33,25 @@ public class EZDatabase {
     deinit {
         sqliteDriver.shutdown()
         try! elg.syncShutdownGracefully()
+    }
+    
+    static var shared: EZDatabase? = nil
+    
+    var changeListeners: [ListenerKey:()->()] = [:]
+    
+    struct ListenerKey: Hashable {
+        var schema: String
+        var objectID: ObjectIdentifier
+    }
+    
+    func register<ModelType: Model>(query: Query<ModelType>, action: @escaping ()->()) {
+        let key = ListenerKey(schema: ModelType.schema, objectID: ObjectIdentifier(query))
+        self.changeListeners[key] = action
+    }
+    
+    func deregister<ModelType: Model>(query: Query<ModelType>) {
+        let key = ListenerKey(schema: ModelType.schema, objectID: ObjectIdentifier(query))
+        self.changeListeners[key] = nil
     }
 }
 
@@ -40,14 +61,24 @@ extension EZDatabase: Database {
     }
     
     public func execute(query: DatabaseQuery, onRow: @escaping (DatabaseRow) -> ()) -> EventLoopFuture<Void> {
-        self.database.execute(query: query, onRow: onRow)
+        
+        switch query.action {
+        case .create, .delete, .update, .custom(_):
+            for (key, action) in self.changeListeners where key.schema == query.schema {
+                action()
+            }
+        default:
+            break
+        }
+        
+        return self.database.execute(query: query, onRow: onRow)
     }
     
     public func execute(schema: DatabaseSchema) -> EventLoopFuture<Void> {
-        self.database.execute(schema: schema)
+        return self.database.execute(schema: schema)
     }
     
     public func withConnection<T>(_ closure: @escaping (Database) -> EventLoopFuture<T>) -> EventLoopFuture<T> {
-        self.database.withConnection(closure)
+        return self.database.withConnection(closure)
     }
 }
