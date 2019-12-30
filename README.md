@@ -54,4 +54,4 @@ struct SomeView: View {
 }
 ```
 
-Use the `query` parameter to customize the query as usual, then you can pass a binding to your query with `$yourQuery`
+The views will automatically update with the content of your `@Query` properties when there are changes to your models rows
