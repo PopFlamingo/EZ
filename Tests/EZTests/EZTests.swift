@@ -15,7 +15,7 @@ final class EZTests: XCTestCase {
     class Baz {
         @Query var allValues: [FooModel]
         @Query(\.$baz >= 20) var filtered1: [FooModel]
-        @Query(\.$bar == "abc", \.$baz >= 20, \.$baz < 20, limit: 100) var filtered2: [FooModel]
+        @Query(\.$bar == "abc", \.$baz >= 20, limit: 100) var filtered2: [FooModel]
         @Query({ $0.limit(10) }) var customQueryBuilder: [FooModel]
     }
     
@@ -29,6 +29,7 @@ final class EZTests: XCTestCase {
     func testExample() {
         let value = FooModel()
         value.bar = "Hey"
+        value.baz = 10
         let baz = Baz()
         XCTAssertNoThrow(try value.save(on: self.app.database).wait())
         XCTAssertEqual(baz.allValues.count, 1)
