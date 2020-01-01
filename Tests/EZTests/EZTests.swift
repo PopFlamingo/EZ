@@ -13,8 +13,10 @@ final class EZTests: XCTestCase {
     }
     
     class Baz {
-        @Query var values: [FooModel]
-        @Query(query: { $0.limit(10) }) var filtered: [FooModel]
+        @Query var allValues: [FooModel]
+        @Query(\.$baz >= 20) var filtered1: [FooModel]
+        @Query(\.$bar == "abc", \.$baz >= 20, \.$baz < 20, limit: 100) var filtered2: [FooModel]
+        @Query({ $0.limit(10) }) var customQueryBuilder: [FooModel]
     }
     
     var app: TestApp! = nil
@@ -29,13 +31,14 @@ final class EZTests: XCTestCase {
         value.bar = "Hey"
         let baz = Baz()
         XCTAssertNoThrow(try value.save(on: self.app.database).wait())
-        XCTAssertEqual(baz.values.count, 1)
+        XCTAssertEqual(baz.allValues.count, 1)
     }
 
     final class FooModel: Model {
         static var schema: String = "foomodel"
         @ID(key: "id", generatedBy: .database) var id: Int?
         @Field(key: "bar") var bar: String
+        @Field(key: "baz") var baz: Int
     }
     
     final class FooMigration: Migration {
@@ -43,6 +46,7 @@ final class EZTests: XCTestCase {
             database.schema(FooModel.schema)
                 .field("id", .int, .identifier(auto: true))
                 .field("bar", .string, .required)
+                .field("baz", .int, .required)
                 .create()
         }
         

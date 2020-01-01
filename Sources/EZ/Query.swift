@@ -14,7 +14,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         self.init(database: nil)
     }
     
-    public init(query queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
+    public init(_ queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
         let actualModifier = queryModifier ?? { $0 }
         self.specifiedDatabase = database
         let someObserved = ObservedQuery(value: nil)
@@ -23,7 +23,20 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
             let newValue = try! actualModifier(ModelType.query(on: database ?? EZDatabase.shared)).all().wait()
             someObserved.value = newValue
         }
-        
+    }
+    
+    public init(_ filters: ModelValueFilter<ModelType>..., limit: Int? = nil, database: EZDatabase? = nil) {
+        let modifier: (QueryBuilder<ModelType>)->(QueryBuilder<ModelType>) = { query in
+            var modifiedQuery = query
+            for filter in filters {
+                modifiedQuery = modifiedQuery.filter(filter)
+            }
+            if let limit = limit {
+                modifiedQuery = modifiedQuery.limit(limit)
+            }
+            return modifiedQuery
+        }
+        self.init(modifier, database: database)
     }
     
     
