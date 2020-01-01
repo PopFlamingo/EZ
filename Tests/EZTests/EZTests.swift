@@ -16,6 +16,7 @@ final class EZTests: XCTestCase {
         @Query var allValues: [FooModel]
         @Query(\.$baz >= 20) var filtered1: [FooModel]
         @Query(\.$bar == "abc", \.$baz >= 20, limit: 100) var filtered2: [FooModel]
+        @Query(limit: 100) var filtered3: [FooModel]
         @Query({ $0.limit(10) }) var customQueryBuilder: [FooModel]
     }
     

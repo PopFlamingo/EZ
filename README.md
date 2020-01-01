@@ -48,8 +48,18 @@ Use `Fluent` as usual, additionally you can use the `Query` property wrapper lik
 ```swift
 struct SomeView: View {
     ...
+    /// All FooModel values
     @Query var allValues: [FooModel]
-    @Query(query: { $0.limit(10) }) var filtered: [FooModel]
+    
+    /// Only the FooModel values whose .bar property is equal to "abc"
+    /// and whose .baz property is inferior or equal to 25
+    @Query(\.$bar == "abc", \.$baz <= 25) var filtered: [FooModel]
+    
+    /// The ten first FooModel values whose .bar property is equal to "abc"
+    @Query(\.$bar == "abc", limit: 10) var filteredAndLimited: [FooModel]
+    
+    /// The ten first values of all FooModel values
+    @Query(limit: 10) var limited: [FooModel]
     ...
 }
 ```
