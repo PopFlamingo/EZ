@@ -154,9 +154,9 @@ public struct Sorters<ModelType: FluentKit.Model> {
 public typealias SortDescriptorOperator = (Void, Void) -> DatabaseQuery.Sort.Direction
 
 public func <(lhs: Void, rhs: Void) -> DatabaseQuery.Sort.Direction {
-    DatabaseQuery.Sort.Direction.ascending
+    .ascending
 }
 
 public func >(lhs: Void, rhs: Void) -> DatabaseQuery.Sort.Direction {
-    DatabaseQuery.Sort.Direction.descending
+    .descending
 }
