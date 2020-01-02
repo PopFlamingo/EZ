@@ -32,6 +32,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
                 switch schema {
                 case .schema(let name, let alias):
                     schemas.append(name)
+                    //FIXME: What's an alias exactly
                     if let alias = alias {
                         schemas.append(alias)
                     }
