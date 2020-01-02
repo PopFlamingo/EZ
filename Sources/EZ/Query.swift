@@ -65,7 +65,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         self.init(filters, sorters: sorters, limit: limit, database: database)
     }
     
-    private init(_ filters: [ModelValueFilter<ModelType>], sorters: Sorters<ModelType>? = nil, limit: Int? = nil, database: EZDatabase? = nil) {
+    public init(_ filters: [ModelValueFilter<ModelType>], sorters: Sorters<ModelType>? = nil, limit: Int? = nil, database: EZDatabase? = nil) {
         let modifier: (QueryBuilder<ModelType>)->(QueryBuilder<ModelType>) = { query in
             var modifiedQuery = query
             for filter in filters {
