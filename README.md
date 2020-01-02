@@ -48,18 +48,48 @@ Use `Fluent` as usual, additionally you can use the `Query` property wrapper lik
 ```swift
 struct SomeView: View {
     ...
-    /// All FooModel values
+    /// All values of FooModel
     @Query var allValues: [FooModel]
     
-    /// Only the FooModel values whose .bar property is equal to "abc"
-    /// and whose .baz property is inferior or equal to 25
+    /// FooModel values that match the filters
     @Query(\.$bar == "abc", \.$baz <= 25) var filtered: [FooModel]
     
-    /// The ten first FooModel values whose .bar property is equal to "abc"
+    /// Filters and limits the number of values
     @Query(\.$bar == "abc", limit: 10) var filteredAndLimited: [FooModel]
     
-    /// The ten first values of all FooModel values
+    /// Limits the number of values
     @Query(limit: 10) var limited: [FooModel]
+    
+    /// All of the FooModel values, sorted by the bar property in ascending order
+    @Query(sorter: (\.$bar, >)) var sortedByAscendingBar: [FooModel]
+    
+    /// All of the FooModel values, sorted by ascending bar and descending baz
+    @Query(sorters: Sorters((\.$bar, >), (\.$baz, <)) var sortedByAscendingBar: [FooModel]
+    
+    /// Filter, sorter and limit combined
+    @Query(\.$bar == "abc", sorter: (\.$bar, >), limit: 100) var sortedByAscendingBar: [FooModel]
+    
+    /// A custom QueryBuilder that lets use Fluent as usual
+    /// This also gives access to features not directly supported
+    /// by the `Query` initializer such as joins and more
+    @Query({
+        $0
+            .filter(\.$bar == "abc")
+            .filter(\.$baz < 20)
+            .filter(\.$baz >= 10)
+            .sort(\.$bar, .descending)
+            .sort(\.$baz, .ascending)
+            .limit(100)
+    }) var customQueryBuilder: [FooModel]
+    
+    /// A complex query over multiples lines
+    @Query(
+        \.$bar == "abc",
+        \.$baz < 20,
+        \.$baz >= 10,
+        sorters: Sorters((\.$bar, >), (\.$baz, <)),
+        limit: 100
+    ) var complexQuery: [FooModel]
     ...
 }
 ```
