@@ -9,7 +9,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
     }
-    let dependencies: [String]
+    let dependencies: Set<String>
         
     public init() {
         self.init(database: nil)
@@ -21,7 +21,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         self.specifiedDatabase = database
         let someObserved = ObservedQuery(value: nil)
         self.observed = someObserved
-        var schemas = [ModelType.schema]
+        var schemas = [ModelType.schema] as Set
         
         for join in actualQuery.query.joins.map({ $0 }) {
             switch join {
@@ -31,10 +31,10 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
             case .join(schema: let schema, foreign: _, local: _, method: _):
                 switch schema {
                 case .schema(let name, let alias):
-                    schemas.append(name)
+                    schemas.insert(name)
                     //FIXME: What's an alias exactly
                     if let alias = alias {
-                        schemas.append(alias)
+                        schemas.insert(alias)
                     }
                 case .custom(_):
                     //FIXME: What to do in this case?
