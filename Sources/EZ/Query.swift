@@ -9,18 +9,42 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
     }
+    let dependencies: [String]
         
     public init() {
         self.init(database: nil)
     }
     
     public init(_ queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
-        let actualModifier = queryModifier ?? { $0 }
+        let newQuery = ModelType.query(on: database ?? EZDatabase.shared)
+        let actualQuery = queryModifier?(newQuery) ?? newQuery
         self.specifiedDatabase = database
         let someObserved = ObservedQuery(value: nil)
         self.observed = someObserved
+        var schemas = [ModelType.schema]
+        
+        for join in actualQuery.query.joins.map({ $0 }) {
+            switch join {
+            case .custom(_):
+                break
+            case .join(schema: let schema, foreign: _, local: _, method: _):
+                switch schema {
+                case .schema(let name, let alias):
+                    schemas.append(name)
+                    if let alias = alias {
+                        schemas.append(alias)
+                    }
+                case .custom(_):
+                    break
+                }
+                
+            }
+        }
+        
+        self.dependencies = schemas
+        
         self.database.register(query: self) {
-            let newValue = try! actualModifier(ModelType.query(on: database ?? EZDatabase.shared)).all().wait()
+            let newValue = try! actualQuery.all().wait()
             someObserved.value = newValue
         }
     }
