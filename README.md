@@ -64,10 +64,10 @@ struct SomeView: View {
     @Query(sorter: (\.$bar, >)) var sortedByAscendingBar: [FooModel]
     
     /// All of the FooModel values, sorted by ascending bar and descending baz
-    @Query(sorters: Sorters((\.$bar, >), (\.$baz, <)) var sortedByAscendingBar: [FooModel]
+    @Query(sorters: Sorters((\.$bar, >), (\.$baz, <)) var sortedByAscBarDescBaz: [FooModel]
     
     /// Filter, sorter and limit combined
-    @Query(\.$bar == "abc", sorter: (\.$bar, >), limit: 100) var sortedByAscendingBar: [FooModel]
+    @Query(\.$bar == "abc", sorter: (\.$bar, >), limit: 100) var filterSortLimit: [FooModel]
     
     /// A custom QueryBuilder that lets use Fluent as usual
     /// This also gives access to features not directly supported
