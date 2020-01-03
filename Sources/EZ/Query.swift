@@ -4,7 +4,7 @@ import SwiftUI
 @propertyWrapper
 public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     
-    @ObservedObject var observed: ObservedQuery
+    @ObservedObject var observedQuery: ObservedQuery
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
@@ -16,47 +16,45 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     }
     
     public init(_ queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
-        let newQuery = ModelType.query(on: database ?? EZDatabase.shared)
-        let actualQuery = queryModifier?(newQuery) ?? newQuery
+        let emptyQueryBuilder = ModelType.query(on: database ?? EZDatabase.shared)
+        let queryBuilder = queryModifier?(emptyQueryBuilder) ?? emptyQueryBuilder
         self.specifiedDatabase = database
-        let someObserved = ObservedQuery(value: nil)
-        self.observed = someObserved
-        var schemas = [ModelType.schema] as Set
+        let observedQuery = ObservedQuery(value: nil)
+        self.observedQuery = observedQuery
+        var dependenciesSchemas = [ModelType.schema] as Set
         
-        for join in actualQuery.query.joins.map({ $0 }) {
+        for join in queryBuilder.query.joins.map({ $0 }) {
             switch join {
             case .custom(_):
                 assertionFailure(ErrorMessages.customSQLError)
             case .join(schema: let schema, foreign: _, local: _, method: _):
                 switch schema {
                 case .schema(let name, let alias):
-                    schemas.insert(name)
+                    dependenciesSchemas.insert(name)
                     //FIXME: What's an alias exactly
                     if let alias = alias {
-                        schemas.insert(alias)
+                        dependenciesSchemas.insert(alias)
                     }
                 case .custom(_):
                     assertionFailure(ErrorMessages.customSQLError)
                     break
                 }
-                
             }
         }
         
-        let mirror = Mirror(reflecting: ModelType.init())
-        for childProperty in mirror.children {
-            if let property = childProperty.value as? DependencySpecifier {
+        let modelMirror = Mirror(reflecting: ModelType.init())
+        for property in modelMirror.children {
+            if let property = property.value as? DependencySpecifier {
                 for dependency in property.dependencies {
-                    schemas.insert(dependency)
+                    dependenciesSchemas.insert(dependency)
                 }
             }
         }
         
-        self.dependencies = schemas
+        self.dependencies = dependenciesSchemas
         
         self.database.register(query: self) {
-            let newValue = try! actualQuery.all().wait()
-            someObserved.value = newValue
+            observedQuery.result = try! queryBuilder.all().wait()
         }
     }
     
@@ -97,21 +95,21 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     
     
     public var wrappedValue: [ModelType] {
-        if let existing = observed.value {
+        if let existing = observedQuery.result {
             return existing
         } else {
             let value = try! ModelType.query(on: database).all().wait()
-            observed.value = value
+            observedQuery.result = value
             return value
         }
     }
     
     class ObservedQuery: ObservableObject {
         init(value: [ModelType]?) {
-            self.value = value
+            self.result = value
         }
         
-        @Published var value: [ModelType]?
+        @Published var result: [ModelType]?
     }
     
 }
