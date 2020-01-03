@@ -50,14 +50,14 @@ public class EZDatabase {
     
     func register<ModelType: Model>(query: Query<ModelType>, action: @escaping ()->()) {
         for schema in query.dependencies {
-            let key = ListenerKey(schema: schema, objectID: ObjectIdentifier(query.observedQuery))
+            let key = ListenerKey(schema: schema, objectID: ObjectIdentifier(query.observable))
             self.changeListeners[key] = action
         }
     }
     
     func deregister<ModelType: Model>(query: Query<ModelType>) {
         for schema in query.dependencies {
-            let key = ListenerKey(schema: schema, objectID: ObjectIdentifier(query.observedQuery))
+            let key = ListenerKey(schema: schema, objectID: ObjectIdentifier(query.observable))
             self.changeListeners[key] = nil
         }
     }

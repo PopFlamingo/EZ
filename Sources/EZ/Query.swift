@@ -3,8 +3,7 @@ import SwiftUI
 
 @propertyWrapper
 public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
-    
-    @ObservedObject var observedQuery: ObservedQuery
+    @ObservedObject public var observable: ObservableQuery
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
@@ -19,8 +18,8 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         let emptyQueryBuilder = ModelType.query(on: database ?? EZDatabase.shared)
         let queryBuilder = queryModifier?(emptyQueryBuilder) ?? emptyQueryBuilder
         self.specifiedDatabase = database
-        let observedQuery = ObservedQuery(value: nil)
-        self.observedQuery = observedQuery
+        let observedQuery = ObservableQuery(result: nil)
+        self.observable = observedQuery
         var dependenciesSchemas = [ModelType.schema] as Set
         
         for join in queryBuilder.query.joins.map({ $0 }) {
@@ -95,18 +94,18 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     
     
     public var wrappedValue: [ModelType] {
-        if let existing = observedQuery.result {
+        if let existing = observable.result {
             return existing
         } else {
             let value = try! ModelType.query(on: database).all().wait()
-            observedQuery.result = value
+            observable.result = value
             return value
         }
     }
     
-    class ObservedQuery: ObservableObject {
-        init(value: [ModelType]?) {
-            self.result = value
+    class ObservableQuery: ObservableObject {
+        init(result: [ModelType]?) {
+            self.result = result
         }
         
         @Published var result: [ModelType]?
