@@ -4,7 +4,7 @@ import SwiftUI
 @propertyWrapper
 public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
     
-    @ObservedObject var observedQuery: ObservedQuery
+    var observedQuery: ObservedQuery
     var specifiedDatabase: EZDatabase?
     var database: EZDatabase {
         specifiedDatabase ?? EZDatabase.shared
@@ -104,12 +104,12 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         }
     }
     
-    class ObservedQuery: ObservableObject {
+    class ObservedQuery {
         init(value: [ModelType]?) {
             self.result = value
         }
         
-        @Published var result: [ModelType]?
+        var result: [ModelType]?
     }
     
 }
