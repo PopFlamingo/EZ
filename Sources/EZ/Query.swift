@@ -44,6 +44,17 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
             }
         }
         
+        let mirror = Mirror(reflecting: ModelType.init())
+        for childProperty in mirror.children {
+            if let property = childProperty.value as? DependencySpecifier {
+                for dependency in property.dependencies {
+                    schemas.insert(dependency)
+                }
+            }
+        }
+        
+        print("Detected dependencies for \(type(of: self)) are \(schemas)")
+        
         self.dependencies = schemas
         
         self.database.register(query: self) {

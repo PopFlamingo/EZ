@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/vapor/fluent-kit.git", from: "1.0.0-beta.2.7"),
+        .package(url: "https://github.com/adtrevor/fluent-kit.git", .branch("fixmore")),
         .package(url: "https://github.com/adtrevor/fluent-sqlite-driver.git", .branch("fixios")),
     ],
     targets: [
