@@ -104,12 +104,12 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         }
     }
     
-    class ObservedQuery {
+    class ObservedQuery: ObservedObject {
         init(value: [ModelType]?) {
             self.result = value
         }
         
-        var result: [ModelType]?
+        @Published var result: [ModelType]?
     }
     
 }
