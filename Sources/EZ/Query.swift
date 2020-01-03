@@ -53,8 +53,6 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
             }
         }
         
-        print("Detected dependencies for \(type(of: self)) are \(schemas)")
-        
         self.dependencies = schemas
         
         self.database.register(query: self) {
