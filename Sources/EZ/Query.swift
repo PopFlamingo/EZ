@@ -1,167 +1,42 @@
-import FluentKit
+//
+//  File.swift
+//  
+//
+//  Created by Trevör Anne Denise on 03/01/2020.
+//
+
 import SwiftUI
 
 @propertyWrapper
 public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
-    @ObservedObject public var observable: ObservableQuery
-    var specifiedDatabase: EZDatabase?
-    var database: EZDatabase {
-        specifiedDatabase ?? EZDatabase.shared
+    @ObservedObject private var observable: ObservableQuery<ModelType>
+    
+    public var wrappedValue: [ModelType] {
+        return observable.result
     }
-    let dependencies: Set<String>
-        
+    
     public init() {
-        self.init(database: nil)
+        self.observable = ObservableQuery()
     }
     
     public init(_ queryModifier: ((QueryBuilder<ModelType>)->(QueryBuilder<ModelType>))? = nil, database: EZDatabase? = nil) {
-        let emptyQueryBuilder = ModelType.query(on: database ?? EZDatabase.shared)
-        let queryBuilder = queryModifier?(emptyQueryBuilder) ?? emptyQueryBuilder
-        self.specifiedDatabase = database
-        let observedQuery = ObservableQuery(result: nil)
-        self.observable = observedQuery
-        var dependenciesSchemas = [ModelType.schema] as Set
-        
-        for join in queryBuilder.query.joins.map({ $0 }) {
-            switch join {
-            case .custom(_):
-                assertionFailure(ErrorMessages.customSQLError)
-            case .join(schema: let schema, foreign: _, local: _, method: _):
-                switch schema {
-                case .schema(let name, let alias):
-                    dependenciesSchemas.insert(name)
-                    //FIXME: What's an alias exactly
-                    if let alias = alias {
-                        dependenciesSchemas.insert(alias)
-                    }
-                case .custom(_):
-                    assertionFailure(ErrorMessages.customSQLError)
-                    break
-                }
-            }
-        }
-        
-        let modelMirror = Mirror(reflecting: ModelType.init())
-        for property in modelMirror.children {
-            if let property = property.value as? DependencySpecifier {
-                for dependency in property.dependencies {
-                    dependenciesSchemas.insert(dependency)
-                }
-            }
-        }
-        
-        self.dependencies = dependenciesSchemas
-        
-        self.database.register(query: self) {
-            observedQuery.result = try! queryBuilder.all().wait()
-        }
+        self.observable = ObservableQuery(queryModifier, database: database)
     }
     
     public init<T>(_ filters: ModelValueFilter<ModelType>..., sorter: Sorters<ModelType>.Sorter<T>? = nil, limit: Int? = nil, database: EZDatabase? = nil) {
+        var sorters: Sorters<ModelType>? = nil
         if let sorter = sorter {
-            self.init(filters, sorters: Sorters(sorter), limit: limit, database: database)
-        } else {
-            self.init(filters, sorters: nil, limit: limit, database: database)
+            sorters = Sorters(sorter)
         }
         
+        self.observable = ObservableQuery(filters, sorters: sorters, limit: limit, database: database)
     }
     
     public init(_ filters: ModelValueFilter<ModelType>..., sorters: Sorters<ModelType>? = nil, limit: Int? = nil, database: EZDatabase? = nil) {
-        self.init(filters, sorters: sorters, limit: limit, database: database)
+        self.observable = ObservableQuery(filters, sorters: sorters, limit: limit, database: database)
     }
     
     public init(_ filters: [ModelValueFilter<ModelType>], sorters: Sorters<ModelType>? = nil, limit: Int? = nil, database: EZDatabase? = nil) {
-        let modifier: (QueryBuilder<ModelType>)->(QueryBuilder<ModelType>) = { query in
-            var modifiedQuery = query
-            for filter in filters {
-                modifiedQuery = modifiedQuery.filter(filter)
-            }
-            
-            if let sorters = sorters {
-                modifiedQuery = sorters.transform(modifiedQuery)
-            }
-            
-            if let limit = limit {
-                modifiedQuery = modifiedQuery.limit(limit)
-            }
-            
-            return modifiedQuery
-        }
-        self.init(modifier, database: database)
+        self.observable = ObservableQuery(filters, sorters: sorters, limit: limit, database: database)
     }
-    
-    
-    
-    
-    public var wrappedValue: [ModelType] {
-        if let existing = observable.result {
-            return existing
-        } else {
-            let value = try! ModelType.query(on: database).all().wait()
-            observable.result = value
-            return value
-        }
-    }
-    
-    class ObservableQuery: ObservableObject {
-        init(result: [ModelType]?) {
-            self.result = result
-        }
-        
-        @Published var result: [ModelType]?
-    }
-    
-}
-
-
-
-public struct Sorters<ModelType: FluentKit.Model> {
-    
-    public typealias Sorter<T: Codable> = (KeyPath<ModelType, Field<T>>, SortDescriptorOperator)
-    
-    public init<T>(_ s1: Sorter<T>) {
-        self.transform = { builder in
-            builder.sort(s1.0, s1.1((),()))
-        }
-    }
-    
-    public init<T, U>(_ s1: Sorter<T>, _ s2: Sorter<U>) {
-        self.transform = { builder in
-            builder
-                .sort(s1.0, s1.1((),()))
-                .sort(s2.0, s2.1((),()))
-        }
-    }
-    
-    public init<T, U, V>(_ s1: Sorter<T>, _ s2: Sorter<U>, _ s3: Sorter<V>) {
-        self.transform = { builder in
-            builder
-                .sort(s1.0, s1.1((),()))
-                .sort(s2.0, s2.1((),()))
-                .sort(s3.0, s3.1((),()))
-        }
-    }
-    
-    public init<T, U, V, W>(_ s1: Sorter<T>, _ s2: Sorter<U>, _ s3: Sorter<V>, _ s4: Sorter<W>) {
-        self.transform = { builder in
-            builder
-                .sort(s1.0, s1.1((),()))
-                .sort(s2.0, s2.1((),()))
-                .sort(s3.0, s3.1((),()))
-                .sort(s4.0, s4.1((),()))
-        }
-    }
-    
-    let transform: (QueryBuilder<ModelType>)->(QueryBuilder<ModelType>)
-
-}
-
-public typealias SortDescriptorOperator = (Void, Void) -> DatabaseQuery.Sort.Direction
-
-public func <(lhs: Void, rhs: Void) -> DatabaseQuery.Sort.Direction {
-    .ascending
-}
-
-public func >(lhs: Void, rhs: Void) -> DatabaseQuery.Sort.Direction {
-    .descending
 }
