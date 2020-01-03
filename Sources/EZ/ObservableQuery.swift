@@ -1,5 +1,5 @@
 import FluentKit
-import SwiftUI
+import Combine
 
 public class ObservableQuery<ModelType: FluentKit.Model>: ObservableObject {
     @Published private var _result: [ModelType]? = nil
