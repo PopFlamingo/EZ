@@ -26,8 +26,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
         for join in actualQuery.query.joins.map({ $0 }) {
             switch join {
             case .custom(_):
-                //FIXME: What to do in this case?
-                break
+                assertionFailure(ErrorMessages.customSQLError)
             case .join(schema: let schema, foreign: _, local: _, method: _):
                 switch schema {
                 case .schema(let name, let alias):
@@ -37,7 +36,7 @@ public struct Query<ModelType: FluentKit.Model>: DynamicProperty {
                         schemas.insert(alias)
                     }
                 case .custom(_):
-                    //FIXME: What to do in this case?
+                    assertionFailure(ErrorMessages.customSQLError)
                     break
                 }
                 
