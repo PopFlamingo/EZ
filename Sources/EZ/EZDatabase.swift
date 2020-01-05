@@ -58,6 +58,7 @@ public class EZDatabase {
         }
     }
     
+    // FIXME: Must call this again
     func deregister<ModelType: Model>(query: ObservableQuery<ModelType>) {
         for schema in query.dependencies {
             let key = ListenerKey(schema: schema, objectID: ObjectIdentifier(query))
